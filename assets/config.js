@@ -3,12 +3,12 @@
 // ---------------------------------------------------------------------------
 
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyBB6QaWE7PmbcrdoQ957wkIbujJnSJbWts",
+  authDomain: "milad-program.firebaseapp.com",
+  projectId: "milad-program",
+  storageBucket: "milad-program.firebasestorage.app",
+  messagingSenderId: "495555398321",
+  appId: "1:495555398321:web:5f2e354d18420f35ddb090"
 };
 
 // It is safe for these values to be public — Firestore rules control access,
@@ -22,7 +22,7 @@ export const site = {
 
   // YouTube channel ID — starts with "UC". Find it at
   // youtube.com > your channel > Settings > Advanced > Channel ID.
-  youtubeChannelId: "PASTE_UC_CHANNEL_ID",
+  youtubeChannelId: "UCcmXMoW-87JdsYZLImmE4ow",
 
   // Optional. Only needed for automatic live detection — see README step 8.
   // Restrict this key to your site's domain in the Google Cloud console.
