@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp, collection, getDocs, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, site } from "./config.js";
 
@@ -87,6 +87,10 @@ function loadQuestions(csvText) {
   const rows = toObjects(parseCSV(csvText));
   if (!rows.length) return fail("That file has no rows under the header.");
 
+  // Stamp each import so question ids are never reused between a rehearsal
+  // and the real thing. Answers are filed under phone_questionId, so repeating
+  // an id would make the rules treat a genuine answer as a duplicate.
+  const stamp = Date.now().toString(36);
   const parsed = [];
   for (const [n, r] of rows.entries()) {
     const text = r.question || r.q || "";
@@ -100,7 +104,7 @@ function loadQuestions(csvText) {
     let idx = /^[A-F]$/.test(raw) ? raw.charCodeAt(0) - 65 : parseInt(raw, 10) - 1;
     if (!(idx >= 0 && idx < options.length)) return fail(`Row ${n + 2} has an answer that isn't one of its options.`);
 
-    parsed.push({ id: `q${n + 1}`, text, options, answerIndex: idx, explanation: r.explanation || "" });
+    parsed.push({ id: `${stamp}q${n + 1}`, text, options, answerIndex: idx, explanation: r.explanation || "" });
   }
 
   bank = parsed;
@@ -179,12 +183,15 @@ async function push(state, q, index) {
 
 let liveStartedAt = null;
 let startWatcher = null;
+let endsAt = 0;
+const questionActive = () => Date.now() < endsAt;
 
 $("btn-next").addEventListener("click", async () => {
   if (cursor + 1 >= bank.length) return;
   cursor++;
   const q = bank[cursor];
 
+  endsAt = Date.now() + DURATION();
   await push("running", q, cursor);
   // Track the server-stamped start so the host countdown matches the public one.
   liveStartedAt = null;
@@ -198,12 +205,14 @@ $("btn-next").addEventListener("click", async () => {
 });
 
 $("btn-end").addEventListener("click", async () => {
+  endsAt = 0;
   cursor = bank.length;
   await setDoc(currentRef, { state: "ended", updatedAt: serverTimestamp() });
   paintBank();
 });
 
 $("btn-reset").addEventListener("click", async () => {
+  endsAt = 0;
   cursor = -1;
   await setDoc(currentRef, { state: "idle", updatedAt: serverTimestamp() });
   paintBank();
@@ -221,8 +230,9 @@ onSnapshot(currentRef, snap => {
   }
 
   const tag = $("q-state");
-  tag.textContent = d.state;
-  tag.className = "state-tag " + (d.state === "running" ? "running" : "");
+  const active = d.state === "running" && questionActive();
+  tag.textContent = active ? "running" : (d.state === "running" ? "waiting" : d.state);
+  tag.className = "state-tag " + (active ? "running" : d.state === "ended" ? "ended" : "");
 
   $("q-preview").textContent = d.text || "Nothing on screen. Load your questions, then press start.";
   $("q-position").textContent = d.index ? `question ${d.index} of ${d.total}` : "";
@@ -233,17 +243,31 @@ onSnapshot(currentRef, snap => {
     ? `Answer (your eyes only): ${String.fromCharCode(65 + q.answerIndex)} — ${q.options[q.answerIndex]}`
     : "";
 
-  secsInput.disabled = d.state === "running";
+  secsInput.disabled = active;
   $("btn-end").disabled = d.state === "idle" || d.state === "ended";
-  $("btn-next").disabled = !bank.length || cursor + 1 >= bank.length || d.state === "running";
+  // Never blocked by a running question — the host decides when to move on,
+  // and may want to cut a question short.
+  $("btn-next").disabled = !bank.length || cursor + 1 >= bank.length;
   $("btn-next").textContent = cursor < 0 ? "Start quiz" : "Next question";
 });
 
 // Countdown readout for the host.
 const RING = 2 * Math.PI * 52;
 setInterval(() => {
-  const el = $("q-clock"), fill = $("ring-fill");
-  if (!liveStartedAt || $("q-state").textContent !== "running") {
+  const el = $("q-clock"), fill = $("ring-fill"), tag = $("q-state");
+
+  // The snapshot listener only fires when Firestore changes, and a question
+  // simply timing out changes nothing there — so the tick has to relax the
+  // controls itself, otherwise they stay locked until the next write.
+  if (!questionActive()) {
+    if (tag.textContent === "running") {
+      tag.textContent = "waiting";
+      tag.className = "state-tag";
+      secsInput.disabled = false;
+    }
+  }
+
+  if (!liveStartedAt || !questionActive()) {
     el.textContent = "\u2014";
     fill.style.strokeDashoffset = RING;
     fill.classList.remove("low");
@@ -261,6 +285,7 @@ setInterval(() => {
 
 let siteLoaded = false;
 let notices = [];
+let study = [];
 let pendingImage = null;
 
 function watchSite() {
@@ -275,6 +300,8 @@ function watchSite() {
       $("event-date").value = d.eventDate.slice(0, 16);
     }
     if (document.activeElement !== $("event-label")) $("event-label").value = d.eventLabel || "";
+    study = Array.isArray(d.study) ? d.study : [];
+    paintStudy();
     setAutoPolling(!!d.autoDetect);
   });
 
@@ -313,6 +340,47 @@ function paintNotices() {
     return row;
   }));
 }
+
+/* ---------- study material ------------------------------------------------
+   Links, not files. Firebase Storage needs a paid plan, and a PDF is far too
+   big for a Firestore document — so the file lives in Drive and only its
+   address is stored here.
+   ------------------------------------------------------------------------- */
+
+function paintStudy() {
+  const box = $("study-list-admin");
+  $("study-count").textContent = study.length ? `${study.length} item${study.length > 1 ? "s" : ""}` : "none";
+  if (!study.length) {
+    box.innerHTML = '<p class="hint" style="margin:.6rem 0 0">Nothing published.</p>';
+    return;
+  }
+  box.replaceChildren(...study.map(m => {
+    const row = document.createElement("div");
+    row.className = "notice-row";
+    const a = document.createElement("a");
+    a.href = m.url; a.target = "_blank"; a.rel = "noopener";
+    a.style.flex = "1"; a.textContent = m.title || m.url;
+    const del = document.createElement("button");
+    del.type = "button"; del.textContent = "\u00d7"; del.title = "Delete";
+    del.onclick = async () => {
+      await setDoc(siteRef, { study: study.filter(x => x.id !== m.id) }, { merge: true });
+      toast("Removed.");
+    };
+    row.append(a, del);
+    return row;
+  }));
+}
+
+$("add-study").addEventListener("click", async () => {
+  const title = $("study-title").value.trim();
+  const url = $("study-url").value.trim();
+  if (!/^https?:\/\//.test(url)) return toast("Paste a full link starting with https://", true);
+
+  const next = [...study, { id: "s" + Date.now(), title, url }].slice(-5);
+  await setDoc(siteRef, { study: next }, { merge: true });
+  $("study-title").value = ""; $("study-url").value = "";
+  toast("Added to the public page.");
+});
 
 /* ---------- image: resized and cropped to 16:9 before it ever leaves ------ */
 
@@ -595,3 +663,121 @@ function confirmFirst(id, message) {
 }
 confirmFirst("btn-end", "Tap again to end");
 confirmFirst("btn-reset", "Tap again to clear");
+
+
+/* ==========================================================================
+   Quiz scores
+
+   Every answer is one document: who sent it, which question, which option.
+   The correct answers are only ever in this browser, so scoring happens here
+   rather than in the database — which is also why nobody could read the key.
+   ========================================================================== */
+
+let scored = [];
+
+$("load-scores").addEventListener("click", async () => {
+  if (!bank.length) return toast("Load your question CSV first — it holds the answer key.", true);
+
+  $("scores-hint").textContent = "Loading…";
+  try {
+    const snap = await getDocs(collection(db, "answers"));
+
+    const key = Object.fromEntries(bank.map(q => [q.id, q.answerIndex]));
+    const people = new Map();
+
+    snap.forEach(docSnap => {
+      const a = docSnap.data();
+      if (!a || !a.phone) return;
+      const p = people.get(a.phone) || { name: a.name || "—", house: a.house || "—", phone: a.phone, score: 0, answered: 0 };
+      p.answered++;
+      if (key[a.qid] !== undefined && a.choice === key[a.qid]) p.score++;
+      if (a.name)  p.name  = a.name;    // keep the most recent spelling
+      if (a.house) p.house = a.house;
+      people.set(a.phone, p);
+    });
+
+    // rank by score, then by who answered more, then alphabetically
+    scored = [...people.values()].sort((x, y) =>
+      y.score - x.score || y.answered - x.answered || x.name.localeCompare(y.name));
+
+    if (!scored.length) {
+      $("scores-hint").textContent = "No answers recorded yet.";
+      return toast("Nobody has answered yet.");
+    }
+
+    $("scores-rows").replaceChildren(...scored.map((p, i) => {
+      const tr = document.createElement("tr");
+      [String(i + 1), p.name, p.house, p.phone, String(p.score), String(p.answered)].forEach(v => {
+        const td = document.createElement("td");
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+      return tr;
+    }));
+    $("scores-wrap").classList.remove("hidden");
+    $("scores-actions").classList.remove("hidden");
+    $("scores-hint").textContent =
+      `${scored.length} people took part, ${snap.size} answers in total. Phone numbers are for you only — publishing shows names and scores.`;
+    toast(`Scored ${scored.length} participants.`);
+  } catch (e) {
+    $("scores-hint").textContent = "Could not load answers: " + e.message;
+    toast("Could not load answers.", true);
+  }
+});
+
+$("publish-scores").addEventListener("click", async () => {
+  if (!scored.length) return toast("Load the answers first.", true);
+  const n = Math.max(1, Math.min(20, Number($("top-n").value) || 3));
+
+  // Extend past the cut-off while people are tied on the same score. Publishing
+  // "top 3" and silently dropping one of two people on equal marks is the kind
+  // of thing that causes an argument in the hall.
+  let cut = n;
+  while (cut < scored.length && scored[cut].score === scored[cut - 1].score) cut++;
+
+  // Only place, name and house are published. Scores stay in this dashboard —
+  // they decide the order, but nobody's mark is shown to the hall.
+  const rows = scored.slice(0, cut).map((p, i) => ({
+    name: p.name,
+    house: p.house,
+    place: 1 + scored.slice(0, i).filter(o => o.score > p.score).length   // ties share a place
+  }));
+  await setDoc(doc(db, "results", "quiz"), { published: true, rows, updatedAt: serverTimestamp() });
+  toast(cut > n ? `Published ${rows.length} — ${cut - n} extra for a tie.` : `Published the top ${rows.length}.`);
+});
+
+$("unpublish-scores").addEventListener("click", async () => {
+  await setDoc(doc(db, "results", "quiz"), { published: false }, { merge: true });
+  toast("Leaderboard hidden.");
+});
+
+
+/* ---------- wipe the answers, for after a rehearsal ---------------------- */
+
+$("clear-answers").addEventListener("click", async () => {
+  try {
+    const snap = await getDocs(collection(db, "answers"));
+    if (snap.empty) return toast("There are no answers to clear.");
+
+    // Firestore caps a batch at 500 writes, so delete in chunks.
+    const docs = snap.docs;
+    for (let i = 0; i < docs.length; i += 450) {
+      const batch = writeBatch(db);
+      docs.slice(i, i + 450).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+
+    await setDoc(doc(db, "results", "quiz"), { published: false, rows: [] }, { merge: true });
+
+    scored = [];
+    $("scores-rows").replaceChildren();
+    $("scores-wrap").classList.add("hidden");
+    $("scores-actions").classList.add("hidden");
+    $("scores-hint").textContent = "All answers cleared. Ready for the real quiz.";
+    toast(`Deleted ${docs.length} answers.`);
+  } catch (e) {
+    toast("Could not clear answers: " + e.message, true);
+  }
+});
+
+confirmFirst("clear-answers", "Tap again to delete all");

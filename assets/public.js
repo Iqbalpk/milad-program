@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, onSnapshot }
+import { getFirestore, doc, onSnapshot, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, site, text as T } from "./config.js";
 
@@ -15,7 +15,6 @@ $("foot-org").textContent = site.organisation;
 $("hero-title").textContent = site.eventName;
 $("chip-date").textContent = site.eventDate;
 $("secs-label").textContent = site.questionSeconds;
-$("pdf-link").href = site.studyPdfUrl;
 $("poster-link").href = site.posterFormUrl;
 
 let wasLive = false;
@@ -27,8 +26,81 @@ const uploadsPlaylist = "UU" + channel.slice(2);
 
 $("channel-link").href = `https://www.youtube.com/channel/${channel}`;
 
-// Recent uploads: always on, loaded once, lazily.
-$("videos-player").src = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylist}`;
+/* ---------- recent uploads ------------------------------------------------
+   With an API key we list the newest videos as a grid of thumbnails. One call
+   costs a single quota unit, so even a few hundred visitors barely register
+   against the 10,000 a day. Without a key we fall back to the playlist player,
+   which needs no key but only ever shows one video.
+   ------------------------------------------------------------------------- */
+
+async function loadVideoGrid() {
+  const key = site.youtubeApiKey;
+  if (!key) {
+    $("videos-player").src = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylist}`;
+    return;
+  }
+  try {
+    const n = site.videoCount || 8;
+    const res = await fetch("https://www.googleapis.com/youtube/v3/playlistItems"
+      + `?part=snippet&maxResults=${n}&playlistId=${uploadsPlaylist}&key=${key}`);
+    if (!res.ok) throw new Error(res.status);
+
+    const items = (await res.json()).items || [];
+    if (!items.length) throw new Error("empty");
+
+    $("video-grid").replaceChildren(...items.map(it => {
+      const sn = it.snippet;
+      const id = sn.resourceId?.videoId;
+      if (!id) return document.createComment("");
+
+      // A div, not a button: Chromium blockifies a button's children, which
+      // turns display:-webkit-box into flow-root and kills the two-line clamp.
+      const card = document.createElement("div");
+      card.className = "vid";
+      card.setAttribute("role", "button");
+      card.tabIndex = 0;
+
+      const thumb = document.createElement("div");
+      thumb.className = "vid-thumb";
+      const img = document.createElement("img");
+      img.src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+      img.alt = "";
+      img.loading = "lazy";
+      thumb.appendChild(img);
+
+      const body = document.createElement("div");
+      body.className = "vid-body";
+      const title = document.createElement("p");
+      title.className = "vid-title";
+      title.textContent = sn.title || "";
+      body.appendChild(title);
+
+      card.append(thumb, body);
+
+      // play in place rather than sending people away from the page
+      const play = () => {
+        const frame = document.createElement("iframe");
+        frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+        frame.title = sn.title || "";
+        frame.allow = "accelerometer; autoplay; encrypted-media; picture-in-picture";
+        frame.allowFullscreen = true;
+        card.replaceChildren(frame, body);
+      };
+      card.addEventListener("click", play);
+      card.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(); }
+      });
+      return card;
+    }));
+
+    $("video-grid").classList.remove("hidden");
+    $("videos-fallback").classList.add("hidden");
+  } catch (e) {
+    console.warn("video grid unavailable, using the playlist player:", e.message);
+    $("videos-player").src = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylist}`;
+  }
+}
+loadVideoGrid();
 
 // The live player is a separate iframe. It gets a src only while the channel
 // is live, and the src is cleared afterwards so nothing keeps buffering.
@@ -58,6 +130,7 @@ onSnapshot(doc(db, "live", "site"), snap => {
   wasLive = live;
 
   applyEventDate(d.eventDate, d.eventLabel);
+  renderStudy(Array.isArray(d.study) ? d.study : []);
 }, err => console.error("site listener:", err));
 
 function renderNotices(notices) {
@@ -122,8 +195,32 @@ function applyEventDate(iso, label) {
   }
 
   // Study material comes down 24 hours before the programme starts.
-  const cutoff = start.getTime() - 24 * 60 * 60 * 1000;
-  $("study-card").classList.toggle("hidden", Date.now() >= cutoff);
+  studyCutoffPassed = Date.now() >= start.getTime() - 24 * 60 * 60 * 1000;
+  renderStudy(lastStudy);
+}
+
+/* ---------- study material, managed from the dashboard ------------------- */
+
+let studyCutoffPassed = false;
+let lastStudy = [];
+
+function renderStudy(items) {
+  lastStudy = items;
+  const show = items.length > 0 && !studyCutoffPassed;
+  $("study-card").classList.toggle("hidden", !show);
+  if (!show) return;
+
+  $("study-list").replaceChildren(...items
+    .filter(m => /^https?:\/\//.test(m.url || ""))
+    .map(m => {
+      const a = document.createElement("a");
+      a.className = "btn ghost";
+      a.href = m.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = m.title || T.studyDefault;
+      return a;
+    }));
 }
 
 /* ---------- notifications ------------------------------------------------ */
@@ -161,6 +258,24 @@ const io = new IntersectionObserver(entries => {
 }, { rootMargin: "0px 0px -8% 0px", threshold: .08 });
 document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 
+onSnapshot(doc(db, "results", "quiz"), snap => {
+  const d = snap.data() || {};
+  const rows = (d.published && Array.isArray(d.rows)) ? d.rows : [];
+  $("quiz-results").classList.toggle("hidden", rows.length === 0);
+  $("quiz-rows").replaceChildren(...rows.map((r, i) => {
+    const place = r.place || i + 1;
+    const tr = document.createElement("tr");
+    if (place <= 3) tr.className = "rank-" + place;
+    [String(place), r.name || "\u2014", r.house || "\u2014"].forEach((v, n) => {
+      const td = document.createElement("td");
+      if (n === 0) td.className = "num";
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    return tr;
+  }));
+}, err => console.error("quiz results listener:", err));
+
 onSnapshot(doc(db, "results", "posters"), snap => {
   const d = snap.data() || {};
   const rows = (d.published && Array.isArray(d.rows)) ? d.rows : [];
@@ -183,6 +298,49 @@ onSnapshot(doc(db, "results", "posters"), snap => {
       return tr;
     }));
 }, err => console.error("results listener:", err));
+
+/* ---------- who is playing ------------------------------------------------
+   A name and phone kept in this browser, plus a random id. No login: asking
+   parents to create an account would cost you most of your entries. The phone
+   number is for contacting winners and is never shown publicly.
+   ------------------------------------------------------------------------- */
+
+let me = null;
+try { me = JSON.parse(localStorage.getItem("milad.me") || "null"); } catch { me = null; }
+
+// Indian mobile: ten digits starting 6-9. Country code and spacing are
+// stripped so 9876543210, +91 98765 43210 and 09876543210 are one number,
+// not three — otherwise one person could rejoin simply by typing it differently.
+function normalisePhone(raw) {
+  let d = (raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0"))  d = d.slice(1);
+  return /^[6-9]\d{9}$/.test(d) ? d : null;
+}
+
+function paintJoin() {
+  const joined = !!(me && me.phone);
+  $("join-card").classList.toggle("hidden", joined);
+  $("joined-note").classList.toggle("hidden", !joined);
+  if (joined) $("joined-note").textContent = `\u2713 ${me.name}, ${me.house || ""} \u2014 ${T.joinedAs}`;
+}
+paintJoin();
+
+$("join-btn").addEventListener("click", () => {
+  const name = $("join-name").value.trim();
+  const house = $("join-house").value.trim();
+  const phone = normalisePhone($("join-phone").value);
+  const err = $("join-error");
+  err.classList.add("hidden");
+
+  if (name.length < 2)  { err.textContent = T.joinNeedName;  return err.classList.remove("hidden"); }
+  if (house.length < 2) { err.textContent = T.joinNeedHouse; return err.classList.remove("hidden"); }
+  if (!phone)           { err.textContent = T.joinNeedPhone; return err.classList.remove("hidden"); }
+
+  me = { name, house, phone };
+  localStorage.setItem("milad.me", JSON.stringify(me));
+  paintJoin();
+});
 
 /* ---------- quiz --------------------------------------------------------- */
 
@@ -254,6 +412,11 @@ function choose(i) {
   // One answer per question, and it's final. Once a choice is made every
   // button locks, so nobody can go back and switch to a different option.
   if (picked !== null || remainingMs() <= 0) return;
+  if (!me) {                                  // must register before answering
+    $("join-card").scrollIntoView({ behavior: "smooth", block: "center" });
+    $("join-name").focus();
+    return;
+  }
   picked = i;
   document.querySelectorAll("#options .option").forEach(b => {
     b.setAttribute("aria-pressed", String(Number(b.dataset.i) === i));
@@ -261,6 +424,23 @@ function choose(i) {
   });
   $("picked-note").textContent = T.answerRecorded;
   $("picked-note").classList.remove("hidden");
+
+  // One document per person per question. The id is fixed, and the rules only
+  // permit create — so an answer can never be changed once sent.
+  if (me && current && current.questionId) {
+    // The document id is the phone number plus the question id. A second
+    // person on the same number cannot create it twice, and the rules only
+    // allow create — so one number means one answer, permanently.
+    setDoc(doc(db, "answers", `${me.phone}_${current.questionId}`), {
+      phone: me.phone, name: me.name, house: me.house || "",
+      qid: current.questionId, choice: i, at: Date.now()
+    }).catch(e => {
+      console.error("answer not saved:", e);
+      if (String(e.code) === "permission-denied") {
+        $("picked-note").textContent = T.alreadyAnswered;
+      }
+    });
+  }
 }
 
 function goIdle(message) {

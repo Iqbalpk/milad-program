@@ -24,16 +24,15 @@ export const site = {
   // youtube.com > your channel > Settings > Advanced > Channel ID.
   youtubeChannelId: "UCcmXMoW-87JdsYZLImmE4ow",
 
-  // Optional. Only needed for automatic live detection — see README step 8.
+  // How many recent videos to show in the YouTube grid (needs the API key).
+  videoCount: 8,
+
+  // Optional. Powers the video grid AND automatic live detection — README step 8.
   // Restrict this key to your site's domain in the Google Cloud console.
-  youtubeApiKey: "",
+  youtubeApiKey: "AIzaSyABjpz7yXpEEWKzRSsz0IqTAqKKgJZ4Qf8",
 
   // Public link to your Google Form for poster submissions (step 6).
   posterFormUrl: "PASTE_GOOGLE_FORM_LINK",
-
-  // Link to the study PDF. Upload it to Google Drive, share as
-  // "Anyone with the link", then paste that link here.
-  studyPdfUrl: "PASTE_DRIVE_PDF_LINK",
 
   // Starting value only. You set the real number in the dashboard each time
   // you load questions, so you can decide once you see how long they are.
@@ -65,5 +64,12 @@ export const text = {
 
   noNotices:       "പുതിയ അറിയിപ്പുകൾ ഇല്ല.",
   answerRecorded:  "ഉത്തരം രേഖപ്പെടുത്തി.",
-  moreDetails:     "കൂടുതൽ വിവരങ്ങൾ →"
+  moreDetails:     "കൂടുതൽ വിവരങ്ങൾ →",
+  studyDefault:    "ഡൗൺലോഡ് ചെയ്യുക",
+
+  joinedAs:        "നിങ്ങൾ ക്വിസിൽ ചേർന്നിരിക്കുന്നു",
+  joinNeedName:    "പൂർണ്ണ പേര് നൽകുക.",
+  joinNeedHouse:   "വീട്ടുപേര് നൽകുക.",
+  joinNeedPhone:   "ശരിയായ 10 അക്ക മൊബൈൽ നമ്പർ നൽകുക.",
+  alreadyAnswered: "ഈ നമ്പറിൽ നിന്ന് ഇതിനകം ഉത്തരം നൽകിയിട്ടുണ്ട്."
 };

@@ -362,11 +362,58 @@ section { padding: clamp(2.75rem, 6vw, 4.5rem) 0; }
 .verdict.good { background: rgba(29, 158, 117, .25); color: #d8fbec; }
 .verdict.bad { background: rgba(165, 53, 42, .28); color: #ffe3de; }
 
+.study-list { display: flex; flex-wrap: wrap; gap: .6rem; }
+.study-list .btn { flex: 0 1 auto; }
+
+.join-row { display: flex; flex-wrap: wrap; gap: .6rem; }
+.join-row input { flex: 1 1 10rem; min-width: 0; font: inherit; padding: .8rem .9rem;
+  border: 1px solid var(--edge); border-radius: 10px; background: var(--glass-firm); color: var(--on-field); }
+.join-row input::placeholder { color: var(--on-faint); }
+.join-row input:focus { border-color: var(--gold); outline: none; }
+.join-row .btn { flex: 0 0 auto; }
+.joined-note { font-size: .95rem; color: var(--gold); font-weight: 700; }
+
 .picked-note { margin: 1.1rem 0 0; font-size: .98rem; font-weight: 700; color: var(--gold); }
 .notif-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin-bottom: .6rem; background: rgba(255,255,255,.05); }
 
 .tally { display: flex; align-items: baseline; gap: .6rem; margin-top: 1.25rem; font-size: 1rem; color: var(--on-soft); }
 .tally b { font-size: 1.7rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; }
+
+.video-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  margin-top: 1.5rem;
+}
+@media (max-width: 34rem) { .video-grid { grid-template-columns: repeat(2, 1fr); gap: .7rem; } }
+
+.vid {
+  display: block; text-align: left; padding: 0; border: 1px solid var(--edge);
+  border-radius: 12px; overflow: hidden; background: var(--glass); color: inherit;
+  cursor: pointer; font: inherit; text-decoration: none;
+  transition: border-color .15s ease, transform .12s ease;
+}
+.vid:hover { border-color: var(--edge-firm); transform: translateY(-2px); }
+.vid-thumb { position: relative; aspect-ratio: 16 / 9; background: var(--well); }
+.vid-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vid-thumb::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  background: rgba(4, 24, 19, .72) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f9ce61'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center/1.1rem no-repeat;
+  border: 1px solid var(--edge-firm);
+}
+/* Padding lives on the wrapper, never on the clamped element: overflow clips
+   at the padding edge, so a third line would otherwise show through the
+   bottom padding as a sliver. */
+.vid-body { padding: .7rem .8rem .8rem; }
+.vid-title {
+  margin: 0; font-size: .92rem; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; line-clamp: 2;
+  max-height: 3em;                 /* exactly two lines at line-height 1.5 */
+  overflow: hidden;
+}
+.vid iframe { width: 100%; aspect-ratio: 16/9; border: 0; display: block; }
 
 /* --- video, notice, results ---------------------------------------------- */
 
@@ -381,7 +428,9 @@ tbody tr { transition: background .15s ease; }
 tbody tr:hover { background: var(--gold-wash); }
 tbody tr:last-child td { border-bottom: 0; }
 td.num { font-variant-numeric: tabular-nums; }
-tr.rank-1 td { background: var(--gold-wash); color: var(--gold-bright); font-weight: 700; }
+tr.rank-1 td { background: rgba(233, 197, 95, .16); color: var(--gold-bright); font-weight: 700; }
+tr.rank-2 td { background: rgba(214, 222, 224, .10); color: #dfe7e9; font-weight: 700; }
+tr.rank-3 td { background: rgba(196, 132, 74, .12); color: #e8bb92; font-weight: 700; }
 
 footer { padding: 2.5rem 0; font-size: .95rem; color: var(--on-faint); border-top: 1px solid var(--edge); margin-top: 2rem; }
 footer a { color: var(--gold); }
