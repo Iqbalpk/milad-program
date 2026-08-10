@@ -1,0 +1,69 @@
+// ---------------------------------------------------------------------------
+// Fill these in before deploying. See README.md, step 2 and step 7.
+// ---------------------------------------------------------------------------
+
+export const firebaseConfig = {
+  apiKey: "PASTE_YOUR_API_KEY",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
+};
+
+// It is safe for these values to be public — Firestore rules control access,
+// not this key. Do NOT put any password or secret in this file.
+
+export const site = {
+  eventName: "മീലാദ് പ്രോഗ്രാം",
+  // Shown in the footer. Swap for "Manarul Huda Madrasa, Chenthrappinni East" if you'd rather show the English form.
+  organisation: "മനാറുൽ ഹുദാ മദ്രസ, ചെന്ത്രാപ്പിന്നി ഈസ്റ്റ്",
+  eventDate: "തീയതി പിന്നീട് അറിയിക്കും",
+
+  // YouTube channel ID — starts with "UC". Find it at
+  // youtube.com > your channel > Settings > Advanced > Channel ID.
+  youtubeChannelId: "PASTE_UC_CHANNEL_ID",
+
+  // Optional. Only needed for automatic live detection — see README step 8.
+  // Restrict this key to your site's domain in the Google Cloud console.
+  youtubeApiKey: "",
+
+  // Public link to your Google Form for poster submissions (step 6).
+  posterFormUrl: "PASTE_GOOGLE_FORM_LINK",
+
+  // Link to the study PDF. Upload it to Google Drive, share as
+  // "Anyone with the link", then paste that link here.
+  studyPdfUrl: "PASTE_DRIVE_PDF_LINK",
+
+  // Starting value only. You set the real number in the dashboard each time
+  // you load questions, so you can decide once you see how long they are.
+  questionSeconds: 30
+};
+
+// ---------------------------------------------------------------------------
+// Everything the page says while the quiz is running. Edit the Malayalam
+// freely — it's plain text, and nothing here affects how the site works.
+// ---------------------------------------------------------------------------
+
+export const text = {
+  quizNotStarted:  "ക്വിസ് തുടങ്ങിയിട്ടില്ല",
+  quizRunning:     "ക്വിസ് നടക്കുന്നു",
+  quizFinished:    "ക്വിസ് അവസാനിച്ചു",
+  streamOffline:   "സ്ട്രീം ഓഫ്‌ലൈൻ",
+  streamLive:      "ഇപ്പോൾ ലൈവ്",
+
+  waitingForHost:  "അവതാരകൻ തുടങ്ങാൻ കാത്തിരിക്കുന്നു.",
+  secondsLeft:     "സെക്കൻഡ് ബാക്കി",
+  timesUp:         "സമയം കഴിഞ്ഞു",
+
+
+
+  connectionLost:  "ക്വിസുമായി ബന്ധപ്പെടാൻ കഴിയുന്നില്ല. ഇന്റർനെറ്റ് പരിശോധിക്കുക.",
+
+  // Question counter, e.g. "ചോദ്യം 3 / 15"
+  questionLabel:   "ചോദ്യം",
+
+  noNotices:       "പുതിയ അറിയിപ്പുകൾ ഇല്ല.",
+  answerRecorded:  "ഉത്തരം രേഖപ്പെടുത്തി.",
+  moreDetails:     "കൂടുതൽ വിവരങ്ങൾ →"
+};
