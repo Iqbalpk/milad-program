@@ -27,6 +27,9 @@ export const site = {
   // How many recent videos to show in the YouTube grid (needs the API key).
   videoCount: 8,
 
+  // Set true to print why the video grid failed, on the page itself.
+  showVideoErrors: true,
+
   // Optional. Powers the video grid AND automatic live detection — README step 8.
   // Restrict this key to your site's domain in the Google Cloud console.
   youtubeApiKey: "AIzaSyABjpz7yXpEEWKzRSsz0IqTAqKKgJZ4Qf8",

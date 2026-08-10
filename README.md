@@ -92,9 +92,11 @@ Never add a password field.
 
 ## Step 7 — Fill in the rest of the config
 
-Open `assets/config.js` and set your event name, organisation, date, YouTube channel ID
-(**youtube.com → your channel → Settings → Advanced**, starts with `UC`), and the Drive
-share link for your study PDF.
+Open `assets/config.js` and set your event name, organisation and YouTube channel ID
+(**youtube.com → your channel → Settings → Advanced**, starts with `UC`).
+
+The programme date and the study material are **not** in this file — you manage both from
+the dashboard, under **Page & alerts**, so you never have to edit code to change them.
 
 Replace `assets/logo.svg` with your own logo, keeping the filename.
 
@@ -167,6 +169,21 @@ leaves their phone — no answers are sent anywhere, which is what keeps this fr
 The correct answer never reaches the public page at all. It stays in the dashboard browser
 and is shown only to you, under the question preview.
 
+## Rehearsing, then clearing
+
+Practise as much as you like. Two things keep a rehearsal from contaminating
+the real thing:
+
+- **Question ids are stamped per import.** Loading the CSV again before the real
+  quiz gives every question a fresh id, so an answer from the rehearsal can
+  never be mistaken for a duplicate and block someone.
+- **Clear all answers**, in Judging → Quiz scores, deletes every recorded answer
+  and unpublishes the leaderboard. It asks twice before doing it.
+
+After a rehearsal: press **Clear all answers**, then re-upload your question CSV.
+Participants do not need to do anything — their name, house and number stay on
+their phones, and they can answer again.
+
 ## Judging posters
 
 Download your form's response sheet as CSV, upload it under **Judging**, pick which columns
@@ -207,6 +224,18 @@ It drives two things: the date shown on the site, and the study material, which 
 from the public page automatically **24 hours before** the start time. If you would rather
 write the date in your own words ("സെപ്റ്റംബർ 12, വൈകിട്ട് 6 മണി"), fill the optional label
 field and that is displayed instead.
+
+## Study material
+
+Add it from **Page & alerts → Study material**. Upload the PDF to Google Drive, share it as
+**Anyone with the link**, and paste that link in with a title. Up to five items.
+
+It comes down from the public page by itself 24 hours before the programme starts, and the
+**×** beside each item removes it immediately. After the programme, delete the items and the
+section disappears — add fresh ones next year and it comes back.
+
+The file itself stays in your Drive; only the link is stored. Firebase Storage would need a
+paid plan, and a PDF is far too large for a Firestore document.
 
 ## Notifications
 

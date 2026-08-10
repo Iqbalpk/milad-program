@@ -195,6 +195,26 @@
           <button class="btn wide" id="save-date">Save date</button>
         </div>
 
+        <div class="card">
+          <div class="card-head">
+            <h2>Study material</h2>
+            <span class="pill" id="study-count">none</span>
+          </div>
+          <p class="hint">Upload the PDF to Google Drive, share it as <b>Anyone with the link</b>,
+            then paste that link here. It disappears from the public page automatically 24 hours
+            before the programme, and you can delete it any time to reuse this for the next one.</p>
+          <label class="field">
+            <span>Title <em>(what the button says)</em></span>
+            <input type="text" id="study-title" placeholder="മാതൃകാ ചോദ്യങ്ങൾ (PDF)">
+          </label>
+          <label class="field">
+            <span>Link</span>
+            <input type="url" id="study-url" placeholder="https://drive.google.com/...">
+          </label>
+          <button class="btn wide" id="add-study">Add material</button>
+          <div id="study-list-admin" class="notice-box"></div>
+        </div>
+
         <div class="card dark-card">
           <div class="card-head"><h2>Live stream</h2></div>
           <label class="switch">
@@ -255,6 +275,35 @@
           <input type="file" id="p-file" accept=".csv,text/csv" hidden>
         </label>
       </header>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Quiz scores</h2>
+          <div class="head-actions">
+            <button class="btn quiet sm" id="load-scores">Load answers</button>
+            <button class="btn quiet sm danger-text" id="clear-answers">Clear all answers</button>
+          </div>
+        </div>
+        <p class="hint" id="scores-hint">Press "Load answers" after the quiz. Everyone's answers are
+          scored here against your question list — the correct answers never left this browser,
+          so nobody could have seen them.</p>
+
+        <div class="table-wrap hidden" id="scores-wrap">
+          <table>
+            <thead><tr><th style="width:3.5rem">#</th><th>Name</th><th>House</th><th>Phone</th><th style="width:5rem">Score</th><th style="width:5.5rem">Answered</th></tr></thead>
+            <tbody id="scores-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="row-wrap hidden" id="scores-actions" style="margin-top:1rem">
+          <label class="inline-field">
+            <span class="hint" style="margin:0">Publish top</span>
+            <input type="number" id="top-n" min="1" max="20" value="3" style="width:4.5rem">
+          </label>
+          <button class="btn" id="publish-scores">Publish leaderboard</button>
+          <button class="btn quiet" id="unpublish-scores">Unpublish</button>
+        </div>
+      </div>
 
       <div class="card">
         <p class="hint" id="p-hint">Export your Google Form response sheet

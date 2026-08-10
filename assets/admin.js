@@ -1,3 +1,4 @@
+// build 2026-08-10 — upload index.html, admin.html and the whole assets folder together
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -9,6 +10,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = id => document.getElementById(id);
+
+// Same protection as the public page: a missing element from a half-finished
+// upload must not stop the quiz controls from working.
+function safely(label, fn) {
+  try { fn(); }
+  catch (e) { console.warn(`[${label}] skipped:`, e.message); }
+}
 
 let seconds = Number(localStorage.getItem("milad.seconds")) || site.questionSeconds;
 const DURATION = () => seconds * 1000;
@@ -371,7 +379,7 @@ function paintStudy() {
   }));
 }
 
-$("add-study").addEventListener("click", async () => {
+$("add-study")?.addEventListener("click", async () => {
   const title = $("study-title").value.trim();
   const url = $("study-url").value.trim();
   if (!/^https?:\/\//.test(url)) return toast("Paste a full link starting with https://", true);
@@ -414,7 +422,7 @@ function processImage(file) {
   });
 }
 
-$("notice-img").addEventListener("change", async e => {
+$("notice-img")?.addEventListener("change", async e => {
   const file = e.target.files[0];
   const box = $("notice-preview");
   box.replaceChildren();
@@ -434,7 +442,7 @@ $("notice-img").addEventListener("change", async e => {
   }
 });
 
-$("add-notice").addEventListener("click", async () => {
+$("add-notice")?.addEventListener("click", async () => {
   const text = $("notice-text").value.trim();
   if (!text) return toast("Write the notification text first.", true);
 
@@ -453,7 +461,7 @@ $("add-notice").addEventListener("click", async () => {
 
 /* ---------- programme date ----------------------------------------------- */
 
-$("save-date").addEventListener("click", async () => {
+$("save-date")?.addEventListener("click", async () => {
   const v = $("event-date").value;
   if (!v) return toast("Pick a date and time first.", true);
   await setDoc(siteRef, {
@@ -470,7 +478,7 @@ $("live-toggle").addEventListener("change", async () => {
   flashSite($("live-toggle").checked ? "Live banner is on." : "Live banner is off.");
 });
 
-$("auto-live").addEventListener("change", async () => {
+$("auto-live")?.addEventListener("change", async () => {
   const on = $("auto-live").checked;
   if (on && !site.youtubeApiKey) {
     $("auto-live").checked = false;
@@ -534,7 +542,7 @@ const flashSite = toast;
 let entries = [];
 let headers = [];
 
-$("p-file").addEventListener("change", async e => {
+$("p-file")?.addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
   const rows = parseCSV(await file.text());
@@ -595,7 +603,7 @@ function rebuild(body) {
   $("p-actions").classList.remove("hidden");
 }
 
-$("p-publish").addEventListener("click", async () => {
+$("p-publish")?.addEventListener("click", async () => {
   const rows = entries
     .filter(e => e.marks !== "")
     .map(e => ({ name: e.name, title: e.title, marks: Number(e.marks) }));
@@ -605,7 +613,7 @@ $("p-publish").addEventListener("click", async () => {
   flash(`Published ${rows.length} results to the public page.`);
 });
 
-$("p-unpublish").addEventListener("click", async () => {
+$("p-unpublish")?.addEventListener("click", async () => {
   await setDoc(resultsRef, { published: false }, { merge: true });
   flash("Results hidden from the public page.");
 });
@@ -627,13 +635,15 @@ function watchResults() {
 const TABS = ["quiz", "page", "judge"];
 function showTab(name) {
   TABS.forEach(n => {
-    $("tab-" + n).classList.toggle("hidden", n !== name);
-    $("tab-btn-" + n).setAttribute("aria-selected", String(n === name));
+    $("tab-" + n)?.classList.toggle("hidden", n !== name);
+    $("tab-btn-" + n)?.setAttribute("aria-selected", String(n === name));
   });
   localStorage.setItem("milad.tab", name);
 }
-TABS.forEach(n => $("tab-btn-" + n).addEventListener("click", () => showTab(n)));
-showTab(localStorage.getItem("milad.tab") || "quiz");
+safely("tabs", () => {
+  TABS.forEach(n => $("tab-btn-" + n)?.addEventListener("click", () => showTab(n)));
+  showTab(localStorage.getItem("milad.tab") || "quiz");
+});
 
 /* ---------- keyboard: the host shouldn't have to aim at a button ---------- */
 
@@ -661,8 +671,8 @@ function confirmFirst(id, message) {
     timer = setTimeout(() => { armed = false; btn.textContent = label; }, 4000);
   }, true);
 }
-confirmFirst("btn-end", "Tap again to end");
-confirmFirst("btn-reset", "Tap again to clear");
+safely("end guard", () => confirmFirst("btn-end", "Tap again to end"));
+safely("reset guard", () => confirmFirst("btn-reset", "Tap again to clear"));
 
 
 /* ==========================================================================
@@ -675,7 +685,7 @@ confirmFirst("btn-reset", "Tap again to clear");
 
 let scored = [];
 
-$("load-scores").addEventListener("click", async () => {
+$("load-scores")?.addEventListener("click", async () => {
   if (!bank.length) return toast("Load your question CSV first — it holds the answer key.", true);
 
   $("scores-hint").textContent = "Loading…";
@@ -725,7 +735,7 @@ $("load-scores").addEventListener("click", async () => {
   }
 });
 
-$("publish-scores").addEventListener("click", async () => {
+$("publish-scores")?.addEventListener("click", async () => {
   if (!scored.length) return toast("Load the answers first.", true);
   const n = Math.max(1, Math.min(20, Number($("top-n").value) || 3));
 
@@ -746,7 +756,7 @@ $("publish-scores").addEventListener("click", async () => {
   toast(cut > n ? `Published ${rows.length} — ${cut - n} extra for a tie.` : `Published the top ${rows.length}.`);
 });
 
-$("unpublish-scores").addEventListener("click", async () => {
+$("unpublish-scores")?.addEventListener("click", async () => {
   await setDoc(doc(db, "results", "quiz"), { published: false }, { merge: true });
   toast("Leaderboard hidden.");
 });
@@ -754,7 +764,7 @@ $("unpublish-scores").addEventListener("click", async () => {
 
 /* ---------- wipe the answers, for after a rehearsal ---------------------- */
 
-$("clear-answers").addEventListener("click", async () => {
+$("clear-answers")?.addEventListener("click", async () => {
   try {
     const snap = await getDocs(collection(db, "answers"));
     if (snap.empty) return toast("There are no answers to clear.");
@@ -780,4 +790,4 @@ $("clear-answers").addEventListener("click", async () => {
   }
 });
 
-confirmFirst("clear-answers", "Tap again to delete all");
+safely("clear guard", () => confirmFirst("clear-answers", "Tap again to delete all"));

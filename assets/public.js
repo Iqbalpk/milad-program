@@ -1,3 +1,4 @@
+// build 2026-08-10 — upload index.html, admin.html and the whole assets folder together
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -7,6 +8,14 @@ const fill = (s, vals) => s.replace(/\{(\w+)\}/g, (_, k) => vals[k]);
 
 const db = getFirestore(initializeApp(firebaseConfig));
 const $ = id => document.getElementById(id);
+
+// Optional features run inside this. If an element is missing — usually a
+// half-finished upload where the HTML and the script are different versions —
+// it is logged and skipped, instead of throwing and stopping the quiz.
+function safely(label, fn) {
+  try { fn(); }
+  catch (e) { console.warn(`[${label}] skipped:`, e.message); }
+}
 
 /* ---------- static content from config ---------------------------------- */
 
@@ -35,26 +44,41 @@ $("channel-link").href = `https://www.youtube.com/channel/${channel}`;
 
 async function loadVideoGrid() {
   const key = site.youtubeApiKey;
-  if (!key) {
-    $("videos-player").src = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylist}`;
-    return;
-  }
+  $("fallback-link").href = `https://www.youtube.com/channel/${channel}/videos`;
+
+  // No embeddable fallback exists any more: YouTube blocks embedding of the
+  // auto-generated uploads playlist, so without the API there is nothing to
+  // show but a link out to the channel.
+  const giveUp = why => {
+    console.warn("video grid unavailable:", why);
+    $("videos-fallback").classList.remove("hidden");
+    $("video-grid").classList.add("hidden");
+    const note = $("videos-note");
+    note.textContent = "(" + why + ")";
+    note.classList.toggle("hidden", !site.showVideoErrors);
+  };
+
+  if (!key) return giveUp("no API key in config.js");
+
   try {
     const n = site.videoCount || 8;
     const res = await fetch("https://www.googleapis.com/youtube/v3/playlistItems"
       + `?part=snippet&maxResults=${n}&playlistId=${uploadsPlaylist}&key=${key}`);
-    if (!res.ok) throw new Error(res.status);
+
+    if (!res.ok) {
+      let detail = res.status;
+      try { detail = (await res.json()).error?.message || detail; } catch {}
+      return giveUp(detail);
+    }
 
     const items = (await res.json()).items || [];
-    if (!items.length) throw new Error("empty");
+    if (!items.length) return giveUp("the channel returned no videos");
 
     $("video-grid").replaceChildren(...items.map(it => {
       const sn = it.snippet;
       const id = sn.resourceId?.videoId;
       if (!id) return document.createComment("");
 
-      // A div, not a button: Chromium blockifies a button's children, which
-      // turns display:-webkit-box into flow-root and kills the two-line clamp.
       const card = document.createElement("div");
       card.className = "vid";
       card.setAttribute("role", "button");
@@ -77,7 +101,6 @@ async function loadVideoGrid() {
 
       card.append(thumb, body);
 
-      // play in place rather than sending people away from the page
       const play = () => {
         const frame = document.createElement("iframe");
         frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
@@ -96,11 +119,10 @@ async function loadVideoGrid() {
     $("video-grid").classList.remove("hidden");
     $("videos-fallback").classList.add("hidden");
   } catch (e) {
-    console.warn("video grid unavailable, using the playlist player:", e.message);
-    $("videos-player").src = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylist}`;
+    giveUp(e.message || "network error");
   }
 }
-loadVideoGrid();
+safely("videos", loadVideoGrid);
 
 // The live player is a separate iframe. It gets a src only while the channel
 // is live, and the src is cleared afterwards so nothing keeps buffering.
@@ -118,19 +140,19 @@ onSnapshot(doc(db, "live", "site"), snap => {
 
   // The whole stream block — ribbon, nav link, section, floating alert — is
   // absent unless the channel is actually live. Nothing teases it beforehand.
-  $("ribbon").classList.toggle("hidden", !live);
-  $("nav-stream").classList.toggle("hidden", !live);
-  $("stream").classList.toggle("hidden", !live);
-  setPlayer(live);
+  $("ribbon")?.classList.toggle("hidden", !live);
+  $("nav-stream")?.classList.toggle("hidden", !live);
+  $("stream")?.classList.toggle("hidden", !live);
+  safely("live player", () => setPlayer(live));
 
   if (live && !wasLive && sessionStorage.getItem("milad.popDismissed") !== "1") {
-    $("live-pop").classList.remove("hidden");
+    $("live-pop")?.classList.remove("hidden");
   }
-  if (!live) $("live-pop").classList.add("hidden");
+  if (!live) $("live-pop")?.classList.add("hidden");
   wasLive = live;
 
-  applyEventDate(d.eventDate, d.eventLabel);
-  renderStudy(Array.isArray(d.study) ? d.study : []);
+  safely("date", () => applyEventDate(d.eventDate, d.eventLabel));
+  safely("study", () => renderStudy(Array.isArray(d.study) ? d.study : []));
 }, err => console.error("site listener:", err));
 
 function renderNotices(notices) {
@@ -227,10 +249,10 @@ function renderStudy(items) {
 
 onSnapshot(doc(db, "live", "notices"), snap => {
   const d = snap.data() || {};
-  renderNotices(Array.isArray(d.items) ? d.items : []);
+  safely("notices", () => renderNotices(Array.isArray(d.items) ? d.items : []));
 }, err => console.error("notices listener:", err));
 
-$("bell").addEventListener("click", () => {
+$("bell")?.addEventListener("click", () => {
   const panel = $("notif-panel");
   const open = panel.classList.toggle("hidden");
   $("bell").setAttribute("aria-expanded", String(!open));
@@ -246,11 +268,11 @@ document.addEventListener("click", e => {
   }
 });
 
-$("live-pop-close").addEventListener("click", () => {
+$("live-pop-close")?.addEventListener("click", () => {
   $("live-pop").classList.add("hidden");
   sessionStorage.setItem("milad.popDismissed", "1");
 });
-$("live-pop-go").addEventListener("click", () => $("live-pop").classList.add("hidden"));
+$("live-pop-go")?.addEventListener("click", () => $("live-pop")?.classList.add("hidden"));
 
 // --- scroll reveal --------------------------------------------------------
 const io = new IntersectionObserver(entries => {
@@ -324,9 +346,9 @@ function paintJoin() {
   $("joined-note").classList.toggle("hidden", !joined);
   if (joined) $("joined-note").textContent = `\u2713 ${me.name}, ${me.house || ""} \u2014 ${T.joinedAs}`;
 }
-paintJoin();
+safely("join", paintJoin);
 
-$("join-btn").addEventListener("click", () => {
+$("join-btn")?.addEventListener("click", () => {
   const name = $("join-name").value.trim();
   const house = $("join-house").value.trim();
   const phone = normalisePhone($("join-phone").value);
@@ -413,8 +435,8 @@ function choose(i) {
   // button locks, so nobody can go back and switch to a different option.
   if (picked !== null || remainingMs() <= 0) return;
   if (!me) {                                  // must register before answering
-    $("join-card").scrollIntoView({ behavior: "smooth", block: "center" });
-    $("join-name").focus();
+    $("join-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    $("join-name")?.focus();
     return;
   }
   picked = i;
@@ -422,8 +444,10 @@ function choose(i) {
     b.setAttribute("aria-pressed", String(Number(b.dataset.i) === i));
     b.disabled = true;
   });
-  $("picked-note").textContent = T.answerRecorded;
-  $("picked-note").classList.remove("hidden");
+  if ($("picked-note")) {
+    $("picked-note").textContent = T.answerRecorded;
+    $("picked-note").classList.remove("hidden");
+  }
 
   // One document per person per question. The id is fixed, and the rules only
   // permit create — so an answer can never be changed once sent.
@@ -472,7 +496,7 @@ onSnapshot(doc(db, "live", "current"), snap => {
 
   if (isNew) {
     picked = null;
-    $("picked-note").classList.add("hidden");
+    $("picked-note")?.classList.add("hidden");
     renderQuestion(d);
     clearInterval(ticker);
     ticker = setInterval(paintTimer, 1000);

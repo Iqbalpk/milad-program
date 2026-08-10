@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>മീലാദ് പ്രോഗ്രാം</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; frame-src https://www.youtube.com; connect-src https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://i.ytimg.com; frame-src https://www.youtube.com; connect-src https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="ലൈവ് ക്വിസ്, പോസ്റ്റർ മത്സരം, ലൈവ് സ്ട്രീം.">
 <link rel="icon" href="assets/wordmark-black.svg">
@@ -95,6 +95,22 @@
         ഓരോന്നിനും <span id="secs-label">30</span> സെക്കൻഡ് സമയം.
         നിങ്ങളുടെ സ്കോർ ഈ ഫോണിൽ മാത്രമേ കണക്കാക്കൂ.</p>
 
+      <div class="card glass" id="join-card" style="margin-top:1.5rem">
+        <h3>ക്വിസിൽ പങ്കെടുക്കാൻ പേര് നൽകുക</h3>
+        <p class="muted small" style="margin:.35rem 0 1rem">സമ്മാനം നൽകാൻ വേണ്ടിയാണ് ഫോൺ നമ്പർ.
+          നിങ്ങളുടെ പേരും സ്കോറും മാത്രമേ പരസ്യമായി കാണിക്കൂ.
+          <b>ഒരു മൊബൈൽ നമ്പറിൽ നിന്ന് ഒരാൾക്ക് മാത്രം പങ്കെടുക്കാം.</b></p>
+        <div class="join-row">
+          <input type="text" id="join-name" placeholder="പൂർണ്ണ പേര്" maxlength="60" autocomplete="name">
+          <input type="text" id="join-house" placeholder="വീട്ടുപേര്" maxlength="60">
+          <input type="tel" id="join-phone" placeholder="മൊബൈൽ നമ്പർ (10 അക്കം)" maxlength="15" inputmode="numeric" autocomplete="tel">
+          <button class="btn" id="join-btn">ചേരുക</button>
+        </div>
+        <p class="error-note hidden" id="join-error"></p>
+      </div>
+
+      <p class="joined-note hidden" id="joined-note" style="margin-top:1.5rem"></p>
+
       <div class="stage glass" id="stage" style="margin-top:2rem">
         <div class="stage-idle" id="stage-idle">
           <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
@@ -117,11 +133,11 @@
         </div>
       </div>
 
-      <div class="card glass reveal" id="study-card" style="margin-top:1.75rem">
+      <div class="card glass reveal hidden" id="study-card" style="margin-top:1.75rem">
         <h3>പഠന സാമഗ്രികൾ</h3>
         <p class="muted small" style="margin:.35rem 0 1rem">ലൈവ് റൗണ്ടിന് മുൻപ് വായിക്കാൻ
-          മാതൃകാ ചോദ്യങ്ങളും വിവരങ്ങളും അടങ്ങിയ PDF.</p>
-        <a class="btn ghost" id="pdf-link" href="#" target="_blank" rel="noopener">PDF ഡൗൺലോഡ് ചെയ്യുക</a>
+          മാതൃകാ ചോദ്യങ്ങളും വിവരങ്ങളും.</p>
+        <div class="study-list" id="study-list"></div>
       </div>
     </div>
   </section>
@@ -138,7 +154,7 @@
         <div class="stack">
           <p>മീലാദ് പ്രോഗ്രാമിന്റെ പ്രമേയത്തിൽ ഒരു പോസ്റ്റർ തയ്യാറാക്കി ഫോം വഴി സമർപ്പിക്കുക.
             മൗലികത, കരവിരുത്, പ്രമേയം എത്ര നന്നായി പ്രകടമാകുന്നു എന്നിവ നോക്കിയാണ് വിലയിരുത്തൽ.</p>
-          <p class="small muted">10 MB-യിൽ താഴെയുള്ള JPG, PNG അല്ലെങ്കിൽ PDF സമർപ്പിക്കുക.
+          <p class="small muted">5 MB-യിൽ താഴെയുള്ള JPG, PNG അല്ലെങ്കിൽ PDF സമർപ്പിക്കുക.
             എൻട്രി ഉറപ്പാക്കാൻ ഗൂഗിൾ അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്തിരിക്കണം.
             <b>നിങ്ങളുടെ പാസ്‌വേഡ് ഞങ്ങൾ ഒരിക്കലും ചോദിക്കില്ല.</b></p>
           <p><a class="btn" id="poster-link" href="#" target="_blank" rel="noopener">സമർപ്പണ ഫോം തുറക്കുക</a></p>
@@ -167,14 +183,36 @@
       <h2>ഞങ്ങളുടെ YouTube ചാനൽ</h2>
       <p class="muted" style="max-width:38rem">പള്ളിയിലെ പരിപാടികളുടെയും പ്രഭാഷണങ്ങളുടെയും
         പുതിയ വീഡിയോകൾ. പ്ലേലിസ്റ്റിൽ നിന്ന് ഏത് വീഡിയോയും തിരഞ്ഞെടുക്കാം.</p>
-      <div class="frame" style="margin-top:1.5rem">
-        <iframe id="videos-player" title="ഞങ്ങളുടെ വീഡിയോകൾ" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+      <!-- grid when an API key is present, single player otherwise -->
+      <div class="video-grid hidden" id="video-grid"></div>
+
+      <div class="card glass" id="videos-fallback" style="margin-top:1.5rem">
+        <p style="margin:0 0 1rem">ചാനലിലെ പുതിയ വീഡിയോകൾ യൂട്യൂബിൽ കാണുക.</p>
+        <a class="btn ghost" id="fallback-link" href="#" target="_blank" rel="noopener">YouTube-ൽ കാണുക</a>
+        <p class="small muted hidden" id="videos-note" style="margin:1rem 0 0"></p>
       </div>
       <p style="margin-top:1.25rem">
         <a class="btn ghost" id="channel-link" href="#" target="_blank" rel="noopener">YouTube ചാനൽ സന്ദർശിക്കുക</a>
       </p>
     </div>
   </section>
+  <!-- quiz leaderboard, published from the dashboard --------------------- -->
+  <section id="quiz-results" class="hidden">
+    <div class="shell reveal">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">ലൈവ് ക്വിസ്</p>
+      <h2>ക്വിസ് ഫലം</h2>
+      <div class="table-wrap glass" style="margin-top:1.5rem">
+        <table>
+          <thead><tr><th style="width:5rem">സ്ഥാനം</th><th>പേര്</th><th>വീട്ടുപേര്</th></tr></thead>
+          <tbody id="quiz-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
 
   <!-- results --------------------------------------------------------------- -->
   <section id="results">
