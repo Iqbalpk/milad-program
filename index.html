@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>മീലാദ് പ്രോഗ്രാം</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; frame-src https://www.youtube.com; connect-src https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="ലൈവ് ക്വിസ്, പോസ്റ്റർ മത്സരം, ലൈവ് സ്ട്രീം.">
+<link rel="icon" href="assets/wordmark-black.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Gayathri:wght@400;700&family=Manjari:wght@400;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- Live ribbon — present in the DOM only while the stream is actually on -->
+<div class="ribbon hidden" id="ribbon">
+  <div class="shell">
+    <span class="pulse" aria-hidden="true"></span>
+    <span>ഇപ്പോൾ ലൈവ്</span>
+    <a href="#stream">കാണുക &rarr;</a>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="shell">
+    <a class="brand" href="#top">
+      <img class="wordmark" src="assets/wordmark-white.svg" alt="മനാരെ മദീന">
+    </a>
+
+    <nav class="nav" id="nav">
+      <a href="#stream" class="hidden" id="nav-stream">ലൈവ്</a>
+      <a href="#quiz">ക്വിസ്</a>
+      <a href="#poster">പോസ്റ്റർ മത്സരം</a>
+      <a href="#youtube">YouTube</a>
+      <a href="#results">ഫലങ്ങൾ</a>
+    </nav>
+
+    <div class="notif-wrap">
+      <button class="bell" id="bell" aria-expanded="false" aria-controls="notif-panel" aria-label="അറിയിപ്പുകൾ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="count hidden" id="notif-count">0</span>
+      </button>
+      <div class="notif-panel glass hidden" id="notif-panel" role="region" aria-label="അറിയിപ്പുകൾ">
+        <h3>അറിയിപ്പുകൾ</h3>
+        <div id="notif-list"><p class="notif-empty">പുതിയ അറിയിപ്പുകൾ ഇല്ല.</p></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero shell">
+    <p class="mawlid" lang="ml"><span>ഖൽബിലുണ്ട് എന്റെ നബി ﷺ</span></p>
+    <img class="hero-mark" src="assets/wordmark.svg" alt="മനാരെ മദീന">
+    <p class="hero-year">2026</p>
+    <h1 id="hero-title">മീലാദ് പ്രോഗ്രാം</h1>
+    <p class="lede">സ്മരണയുടെ ഒരു സായാഹ്നം, എല്ലാ പ്രായക്കാർക്കുമുള്ള ലൈവ് ക്വിസ്,
+      എല്ലാവർക്കുമായി തുറന്ന പോസ്റ്റർ മത്സരം. എല്ലാം ഈ പേജിൽ തന്നെ.</p>
+    <div class="meta-row">
+      <span class="chip" id="chip-date">തീയതി പിന്നീട് അറിയിക്കും</span>
+      <span class="chip" id="chip-quiz">ക്വിസ് തുടങ്ങിയിട്ടില്ല</span>
+    </div>
+  </div>
+
+  <!-- LIVE — leads the page, and only exists while actually live ----------- -->
+  <section id="stream" class="hidden">
+    <div class="shell">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">ഇപ്പോൾ</p>
+      <h2>ലൈവ് സംപ്രേഷണം</h2>
+      <div class="frame" style="margin-top:1.5rem">
+        <iframe id="player" title="ലൈവ് സ്ട്രീം" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- quiz ------------------------------------------------------------------ -->
+  <section id="quiz">
+    <div class="shell reveal">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">ലൈവ് ക്വിസ്</p>
+      <h2>ഓരോ ചോദ്യമായി ഉത്തരം നൽകാം</h2>
+      <p class="muted" style="max-width:38rem">അവതാരകൻ വിടുന്ന നിമിഷം ചോദ്യങ്ങൾ ഇവിടെ വരും.
+        ഓരോന്നിനും <span id="secs-label">30</span> സെക്കൻഡ് സമയം.
+        നിങ്ങളുടെ സ്കോർ ഈ ഫോണിൽ മാത്രമേ കണക്കാക്കൂ.</p>
+
+      <div class="stage glass" id="stage" style="margin-top:2rem">
+        <div class="stage-idle" id="stage-idle">
+          <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+          <p style="margin:0" id="idle-text">അവതാരകൻ തുടങ്ങാൻ കാത്തിരിക്കുന്നു.</p>
+          <p class="small" style="margin:.4rem 0 0">ഈ പേജ് തുറന്നു വെക്കുക.</p>
+        </div>
+
+        <div class="hidden" id="stage-live">
+          <div class="timer-bar">
+            <span class="timer-num" id="count" role="timer" aria-live="off">30</span>
+            <span class="word" id="timer-word">സെക്കൻഡ് ബാക്കി</span>
+            <span class="q-index" id="q-index"></span>
+          </div>
+          <div class="timer-track" id="timer-track" aria-hidden="true"><div class="timer-fill" id="bar-fill"></div></div>
+          <div class="q-body">
+            <p class="q-text" id="q-text"></p>
+            <div class="options" id="options" role="group" aria-label="ഉത്തരങ്ങൾ"></div>
+            <p class="picked-note hidden" id="picked-note"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass reveal" id="study-card" style="margin-top:1.75rem">
+        <h3>പഠന സാമഗ്രികൾ</h3>
+        <p class="muted small" style="margin:.35rem 0 1rem">ലൈവ് റൗണ്ടിന് മുൻപ് വായിക്കാൻ
+          മാതൃകാ ചോദ്യങ്ങളും വിവരങ്ങളും അടങ്ങിയ PDF.</p>
+        <a class="btn ghost" id="pdf-link" href="#" target="_blank" rel="noopener">PDF ഡൗൺലോഡ് ചെയ്യുക</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- poster ---------------------------------------------------------------- -->
+  <section id="poster">
+    <div class="shell reveal">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">മത്സരം</p>
+      <h2>പോസ്റ്റർ നിർമ്മാണം</h2>
+      <div class="grid-2" style="margin-top:1.5rem">
+        <div class="stack">
+          <p>മീലാദ് പ്രോഗ്രാമിന്റെ പ്രമേയത്തിൽ ഒരു പോസ്റ്റർ തയ്യാറാക്കി ഫോം വഴി സമർപ്പിക്കുക.
+            മൗലികത, കരവിരുത്, പ്രമേയം എത്ര നന്നായി പ്രകടമാകുന്നു എന്നിവ നോക്കിയാണ് വിലയിരുത്തൽ.</p>
+          <p class="small muted">10 MB-യിൽ താഴെയുള്ള JPG, PNG അല്ലെങ്കിൽ PDF സമർപ്പിക്കുക.
+            എൻട്രി ഉറപ്പാക്കാൻ ഗൂഗിൾ അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്തിരിക്കണം.
+            <b>നിങ്ങളുടെ പാസ്‌വേഡ് ഞങ്ങൾ ഒരിക്കലും ചോദിക്കില്ല.</b></p>
+          <p><a class="btn" id="poster-link" href="#" target="_blank" rel="noopener">സമർപ്പണ ഫോം തുറക്കുക</a></p>
+        </div>
+        <div class="card glass">
+          <h3>എന്തൊക്കെ വേണം</h3>
+          <ul class="small muted" style="padding-left:1.1rem;margin:.75rem 0 0">
+            <li>പൂർണ്ണ പേരും ഫോൺ നമ്പരും</li>
+            <li>സൃഷ്ടിക്ക് ഒരു ശീർഷകം</li>
+            <li>പോസ്റ്റർ ഫയൽ</li>
+          </ul>
+          <p class="small muted" style="margin:1rem 0 0">ഒരാൾക്ക് ഒരു എൻട്രി. ഫയലുകൾ നേരിട്ട്
+            സംഘാടകരുടെ ഡ്രൈവ് ഫോൾഡറിലേക്കാണ് പോകുന്നത്.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- YouTube — always on: the channel's recent uploads ------------------- -->
+  <section id="youtube">
+    <div class="shell reveal">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">YouTube</p>
+      <h2>ഞങ്ങളുടെ YouTube ചാനൽ</h2>
+      <p class="muted" style="max-width:38rem">പള്ളിയിലെ പരിപാടികളുടെയും പ്രഭാഷണങ്ങളുടെയും
+        പുതിയ വീഡിയോകൾ. പ്ലേലിസ്റ്റിൽ നിന്ന് ഏത് വീഡിയോയും തിരഞ്ഞെടുക്കാം.</p>
+      <div class="frame" style="margin-top:1.5rem">
+        <iframe id="videos-player" title="ഞങ്ങളുടെ വീഡിയോകൾ" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+      </div>
+      <p style="margin-top:1.25rem">
+        <a class="btn ghost" id="channel-link" href="#" target="_blank" rel="noopener">YouTube ചാനൽ സന്ദർശിക്കുക</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- results --------------------------------------------------------------- -->
+  <section id="results">
+    <div class="shell reveal">
+      <div class="rule">
+        <svg class="khatim" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8h24v24H8z"/><path d="M20 3.5 36.5 20 20 36.5 3.5 20z"/></svg>
+      </div>
+      <p class="eyebrow">പോസ്റ്റർ മത്സരം</p>
+      <h2>ഫലങ്ങൾ</h2>
+      <div id="results-pending" class="card glass" style="margin-top:1.5rem">
+        <p class="muted" style="margin:0">വിലയിരുത്തൽ നടന്നുകൊണ്ടിരിക്കുന്നു. സംഘാടകർ
+          പ്രസിദ്ധീകരിക്കുമ്പോൾ ഫലങ്ങൾ ഇവിടെ വരും.</p>
+      </div>
+      <div id="results-table" class="table-wrap glass hidden" style="margin-top:1.5rem">
+        <table>
+          <thead>
+            <tr><th style="width:5rem">സ്ഥാനം</th><th>പേര്</th><th>എൻട്രി</th><th style="width:6rem">മാർക്ക്</th></tr>
+          </thead>
+          <tbody id="results-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="shell">
+    <img src="assets/wordmark-white.svg" alt="മനാരെ മദീന" style="height:2.2rem;width:auto;opacity:.6">
+    <p class="small" style="margin:.9rem 0 0">
+      <span id="foot-org">മനാറുൽ ഹുദാ മദ്രസ, ചെന്ത്രാപ്പിന്നി ഈസ്റ്റ്</span>
+    </p>
+  </div>
+</footer>
+
+<!-- floating live alert, injected only when the stream starts -->
+<div class="live-pop glass hidden" id="live-pop" role="status">
+  <div class="row">
+    <span class="pulse" aria-hidden="true"></span>
+    <span>ഇപ്പോൾ ലൈവ്</span>
+    <button class="close" id="live-pop-close" aria-label="അടയ്ക്കുക">&times;</button>
+  </div>
+  <p>സംപ്രേഷണം ആരംഭിച്ചു.</p>
+  <a class="btn wide" href="#stream" id="live-pop-go">കാണുക</a>
+</div>
+
+<script type="module" src="assets/public.js"></script>
+</body>
+</html>
