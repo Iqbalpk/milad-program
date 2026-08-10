@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Milad Program</title>
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; frame-src https://www.youtube.com; connect-src https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" href="assets/wordmark-black.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gayathri:wght@400;700&family=Manjari:wght@400;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="admin-body">
+
+<!-- ============ sign in ============ -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <img src="assets/wordmark-black.svg" alt="മനാരെ മദീന" class="gate-mark">
+    <h1>Organiser sign-in</h1>
+    <p class="hint">Only accounts created in the Firebase console can sign in.</p>
+    <label class="field">
+      <span>Email</span>
+      <input type="email" id="email" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+    </label>
+    <label class="field">
+      <span>Password</span>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn wide lg" id="sign-in">Sign in</button>
+    <div class="error-note hidden" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- ============ dashboard ============ -->
+<div class="hidden" id="dash">
+<div class="app">
+
+  <!-- ---------- sidebar ---------- -->
+  <aside class="side">
+    <div class="side-brand">
+      <img src="assets/wordmark-black.svg" alt="മനാരെ മദീന">
+    </div>
+
+    <p class="side-label">Menu</p>
+    <nav class="side-nav" role="tablist">
+      <button class="side-item" id="tab-btn-quiz" role="tab" aria-selected="true" aria-controls="tab-quiz">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v18l14-9z"/></svg>
+        <span>Run the quiz</span>
+      </button>
+      <button class="side-item" id="tab-btn-page" role="tab" aria-selected="false" aria-controls="tab-page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+        <span>Page &amp; alerts</span>
+      </button>
+      <button class="side-item" id="tab-btn-judge" role="tab" aria-selected="false" aria-controls="tab-judge">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>
+        <span>Judging</span>
+      </button>
+    </nav>
+
+    <p class="side-label">General</p>
+    <nav class="side-nav">
+      <a class="side-item" href="index.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>
+        <span>View site</span>
+      </a>
+      <button class="side-item" id="sign-out">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span>Sign out</span>
+      </button>
+    </nav>
+
+    <div class="side-promo">
+      <p class="promo-title">Running the quiz</p>
+      <p class="promo-text">Press <kbd>Space</kbd> or <kbd>&rarr;</kbd> to send the next question.</p>
+    </div>
+  </aside>
+
+  <!-- ---------- main ---------- -->
+  <main class="main">
+
+    <!-- RUN THE QUIZ -->
+    <section class="tab-panel" id="tab-quiz" role="tabpanel" aria-labelledby="tab-btn-quiz">
+      <header class="page-head">
+        <div>
+          <h1>Run the quiz</h1>
+          <p class="hint">Send questions to everyone's phone, one at a time.</p>
+        </div>
+        <button class="btn" id="btn-next" disabled>Start quiz</button>
+      </header>
+
+      <div class="tiles">
+        <div class="tile accent">
+          <span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+          <div>
+            <p class="tile-label">Questions loaded</p>
+            <p class="tile-value" id="q-count">0</p>
+          </div>
+        </div>
+        <div class="tile">
+          <span class="chip-ico c-amber"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg></span>
+          <div>
+            <p class="tile-label">On screen</p>
+            <p class="tile-value sm" id="q-position">—</p>
+          </div>
+        </div>
+        <div class="tile">
+          <span class="chip-ico c-violet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2"/></svg></span>
+          <div>
+            <p class="tile-label">Status</p>
+            <p class="tile-value sm"><span class="state-tag" id="q-state">idle</span></p>
+          </div>
+        </div>
+        <div class="tile">
+          <span class="chip-ico c-sky"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2"/></svg></span>
+          <div>
+            <p class="tile-label">Seconds each</p>
+            <input type="number" id="secs" min="10" max="180" step="5" class="tile-input">
+            <span class="hint tiny" id="secs-note"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-main">
+        <div class="card">
+          <div class="card-head">
+            <h2>On screen now</h2>
+            <span class="pill" id="q-drawer-toggle-note">live</span>
+          </div>
+          <div class="q" id="q-preview">Nothing on screen yet.</div>
+          <div class="answer-strip" id="q-answer"></div>
+        </div>
+
+        <div class="card center-card">
+          <div class="card-head"><h2>Time left</h2></div>
+          <div class="ring-wrap">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <span class="ring-num" id="q-clock">—</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn quiet" id="btn-reset">Clear screen</button>
+            <button class="btn quiet danger-text" id="btn-end" disabled>End quiz</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Question list</h2>
+          <div class="head-actions">
+            <label class="btn quiet sm file-btn">
+              Upload CSV
+              <input type="file" id="q-file" accept=".csv,text/csv" hidden>
+            </label>
+          </div>
+        </div>
+        <div class="row-wrap">
+          <input type="url" id="q-url" placeholder="…or paste a published Google Sheet CSV link" class="grow-in">
+          <button class="btn quiet sm" id="q-fetch">Load</button>
+        </div>
+        <div class="error-note hidden" id="q-error"></div>
+        <div class="q-list hidden" id="q-list"><ol id="q-items"></ol></div>
+        <p class="hint">Columns: <code>question</code>, <code>option1</code>–<code>option4</code>,
+          <code>answer</code>, optional <code>explanation</code>. Questions never leave this browser —
+          only the one on screen is sent out, and never its answer.</p>
+      </div>
+    </section>
+
+    <!-- PAGE & ALERTS -->
+    <section class="tab-panel hidden" id="tab-page" role="tabpanel" aria-labelledby="tab-btn-page">
+      <header class="page-head">
+        <div>
+          <h1>Page &amp; alerts</h1>
+          <p class="hint">What the public page shows outside the quiz.</p>
+        </div>
+      </header>
+
+      <div class="grid-half">
+        <div class="card">
+          <div class="card-head"><h2>Programme date</h2></div>
+          <p class="hint">Study material disappears from the public page 24 hours before this time.</p>
+          <label class="field">
+            <span>Date and time</span>
+            <input type="datetime-local" id="event-date">
+          </label>
+          <label class="field">
+            <span>Shown on the site <em>(optional)</em></span>
+            <input type="text" id="event-label" placeholder="Leave blank to format automatically">
+          </label>
+          <button class="btn wide" id="save-date">Save date</button>
+        </div>
+
+        <div class="card dark-card">
+          <div class="card-head"><h2>Live stream</h2></div>
+          <label class="switch">
+            <input type="checkbox" id="auto-live">
+            <span><b>Detect automatically</b><i id="auto-live-note">Checks the channel every minute while this page is open.</i></span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="live-toggle">
+            <span><b>Live banner on</b><i>Manual override, for unlisted streams.</i></span>
+          </label>
+          <p class="hint on-dark">While both are off, the live section is absent from the public page entirely.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Notifications</h2>
+          <span class="pill">newest 6 kept</span>
+        </div>
+        <div class="grid-half tight">
+          <div>
+            <label class="field">
+              <span>Message</span>
+              <textarea id="notice-text" placeholder="ക്വിസ് വൈകിട്ട് 7:30-ന് ആരംഭിക്കും."></textarea>
+            </label>
+            <label class="field">
+              <span>Link <em>(optional)</em></span>
+              <input type="url" id="notice-url" placeholder="https://">
+            </label>
+          </div>
+          <div>
+            <span class="field-label">Image <em>(optional)</em></span>
+            <label class="dropzone">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <b>Choose an image</b>
+              <i>1200 × 675 px (16:9) is ideal</i>
+              <input type="file" id="notice-img" accept="image/png,image/jpeg,image/webp" hidden>
+            </label>
+            <p class="hint">Any size works — it is cropped to 16:9 and compressed here before
+              sending. Keep text away from the edges.</p>
+            <div id="notice-preview"></div>
+          </div>
+        </div>
+        <button class="btn wide" id="add-notice">Post notification</button>
+        <div id="notice-list" class="notice-box"></div>
+      </div>
+    </section>
+
+    <!-- JUDGING -->
+    <section class="tab-panel hidden" id="tab-judge" role="tabpanel" aria-labelledby="tab-btn-judge">
+      <header class="page-head">
+        <div>
+          <h1>Judging</h1>
+          <p class="hint">Mark the poster entries, then publish.</p>
+        </div>
+        <label class="btn file-btn">
+          Upload responses CSV
+          <input type="file" id="p-file" accept=".csv,text/csv" hidden>
+        </label>
+      </header>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Quiz scores</h2>
+          <div class="head-actions">
+            <button class="btn quiet sm" id="load-scores">Load answers</button>
+          </div>
+        </div>
+        <p class="hint" id="scores-hint">Press "Load answers" after the quiz. Everyone's answers are
+          scored here against your question list — the correct answers never left this browser,
+          so nobody could have seen them.</p>
+
+        <div class="table-wrap hidden" id="scores-wrap">
+          <table>
+            <thead><tr><th style="width:3.5rem">#</th><th>Name</th><th>House</th><th>Phone</th><th style="width:5rem">Score</th><th style="width:5.5rem">Answered</th></tr></thead>
+            <tbody id="scores-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="row-wrap hidden" id="scores-actions" style="margin-top:1rem">
+          <label class="inline-field">
+            <span class="hint" style="margin:0">Publish top</span>
+            <input type="number" id="top-n" min="1" max="20" value="3" style="width:4.5rem">
+          </label>
+          <button class="btn" id="publish-scores">Publish leaderboard</button>
+          <button class="btn quiet" id="unpublish-scores">Unpublish</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="hint" id="p-hint">Export your Google Form response sheet
+          (File → Download → CSV) and upload it with the button above.</p>
+
+        <div class="hidden grid-half tight" id="p-mapping">
+          <label class="field"><span>Name column</span><select id="p-col-name"></select></label>
+          <label class="field"><span>Entry title column</span><select id="p-col-title"></select></label>
+        </div>
+
+        <div class="table-wrap hidden" id="p-table-wrap">
+          <table>
+            <thead><tr><th>Participant</th><th>Entry</th><th style="width:7rem">Marks</th></tr></thead>
+            <tbody id="p-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="row-wrap hidden" id="p-actions" style="margin-top:1rem">
+          <button class="btn" id="p-publish">Publish results</button>
+          <button class="btn quiet" id="p-unpublish">Unpublish</button>
+        </div>
+        <p class="hint hidden" id="p-saved"></p>
+      </div>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<div class="toast-host" id="toast-host" aria-live="polite"></div>
+<p class="hidden" id="site-saved"></p>
+
+<script type="module" src="assets/admin.js"></script>
+</body>
+</html>

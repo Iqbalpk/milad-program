@@ -1,0 +1,70 @@
+rules_version = '2';
+
+// Paste this into Firebase console > Firestore Database > Rules, then Publish.
+// Already set to the organiser account: manarulhudamadrasanews@gmail.com
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOrganiser() {
+      return request.auth != null
+          && request.auth.token.email == 'manarulhudamadrasanews@gmail.com';
+    }
+
+    // Size guard: a document nobody can shrink is a document that can quietly
+    // cost you money and break the page. 900 KB leaves headroom under the
+    // 1 MB Firestore limit even with an attached image.
+    function sane() {
+      return request.resource.size() < 900000;
+    }
+
+    // The public page reads these. Only the organiser can change them.
+    match /live/{docId} {
+      allow read: if true;
+      allow write: if isOrganiser() && sane();
+    }
+
+    match /results/{docId} {
+      allow read: if true;
+      allow write: if isOrganiser() && sane();
+    }
+
+    // Answers. Anyone may submit — requiring a login would cost most of the
+    // audience. But: only for the question currently on screen, only once
+    // (create never applies to an existing document), and nobody except the
+    // organiser can read them back, so scores stay private until published.
+    match /answers/{answerId} {
+      allow read: if isOrganiser();
+
+      // One answer per phone number per question, enforced three ways:
+      //  - the document id must be phone_question, so a number can't spread
+      //    itself across several documents;
+      //  - only create is allowed, and create never applies to a document
+      //    that already exists, so an answer can never be resubmitted;
+      //  - the question must be the one currently on screen.
+      allow create: if request.resource.data.keys().hasOnly(['phone','name','house','qid','choice','at'])
+                    && request.resource.data.phone is string
+                    && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
+                    && answerId == request.resource.data.phone + '_' + request.resource.data.qid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 1
+                    && request.resource.data.name.size() < 60
+                    && (!('house' in request.resource.data)
+                        || (request.resource.data.house is string
+                            && request.resource.data.house.size() < 60))
+                    && request.resource.data.choice is int
+                    && request.resource.data.choice >= 0
+                    && request.resource.data.choice < 8
+                    && request.resource.data.qid ==
+                       get(/databases/$(database)/documents/live/current).data.questionId;
+
+      allow update, delete: if isOrganiser();
+    }
+
+    // Everything else is closed, including the question bank, which never
+    // leaves the organiser's own browser in the first place.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
