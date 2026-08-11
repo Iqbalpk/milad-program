@@ -24,7 +24,20 @@ $("foot-org").textContent = site.organisation;
 $("hero-title").textContent = site.eventName;
 $("chip-date").textContent = site.eventDate;
 $("secs-label").textContent = site.questionSeconds;
-$("poster-link").href = site.posterFormUrl;
+// Until the form link is filled in, the button would point at placeholder
+// text and 404. Show a plain "coming soon" line instead.
+safely("poster link", () => {
+  const url = site.posterFormUrl;
+  const btn = $("poster-link");
+  if (/^https?:\/\//.test(url)) {
+    btn.href = url;
+  } else {
+    btn.removeAttribute("href");
+    btn.classList.add("quiet");
+    btn.style.pointerEvents = "none";
+    btn.textContent = T.formSoon;
+  }
+});
 
 let wasLive = false;
 const channel = site.youtubeChannelId;

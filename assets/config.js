@@ -35,7 +35,7 @@ export const site = {
   youtubeApiKey: "AIzaSyABjpz7yXpEEWKzRSsz0IqTAqKKgJZ4Qf8",
 
   // Public link to your Google Form for poster submissions (step 6).
-  posterFormUrl: "PASTE_GOOGLE_FORM_LINK",
+  posterFormUrl: "https://forms.gle/u89syCthc9ziaSnp8",
 
   // Starting value only. You set the real number in the dashboard each time
   // you load questions, so you can decide once you see how long they are.
@@ -70,6 +70,7 @@ export const text = {
   answerRecorded:  "ഉത്തരം രേഖപ്പെടുത്തി.",
   moreDetails:     "കൂടുതൽ വിവരങ്ങൾ →",
   studyDefault:    "ഡൗൺലോഡ് ചെയ്യുക",
+  formSoon:        "സമർപ്പണ ഫോം ഉടൻ ലഭ്യമാകും",
 
   joinedAs:        "നിങ്ങൾ ക്വിസിൽ ചേർന്നിരിക്കുന്നു",
   joinNeedName:    "പൂർണ്ണ പേര് നൽകുക.",
