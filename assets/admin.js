@@ -56,6 +56,14 @@ function parseCSV(text) {
   let row = [], field = "", quoted = false;
   text = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 
+  // Excel saves semicolon-separated files in many locales, and some exports
+  // use tabs. Pick whichever appears most on the header line.
+  const headLine = text.split("\n")[0] || "";
+  const sep = [[",", (headLine.match(/,/g) || []).length],
+               [";", (headLine.match(/;/g) || []).length],
+               ["\t", (headLine.match(/\t/g) || []).length]]
+              .sort((a, b) => b[1] - a[1])[0][0];
+
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (quoted) {
@@ -64,7 +72,7 @@ function parseCSV(text) {
         else quoted = false;
       } else field += c;
     } else if (c === '"') quoted = true;
-    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === sep) { row.push(field); field = ""; }
     else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
     else field += c;
   }
@@ -72,9 +80,28 @@ function parseCSV(text) {
   return rows.filter(r => r.some(v => v.trim() !== ""));
 }
 
+// "Option 1", "OPTION_1" and "option1" are the same column to anyone filling
+// in a spreadsheet, so flatten spacing and punctuation before matching.
+const ALIASES = {
+  q: "question", questiontext: "question",
+  a: "option1", b: "option2", c: "option3", d: "option4",
+  opt1: "option1", opt2: "option2", opt3: "option3", opt4: "option4",
+  optiona: "option1", optionb: "option2", optionc: "option3", optiond: "option4",
+  correct: "answer", correctanswer: "answer", ans: "answer",
+  note: "explanation", notes: "explanation"
+};
+
+function normaliseHeader(h) {
+  const k = h.trim().toLowerCase().replace(/[\s._-]+/g, "");
+  return ALIASES[k] || k;
+}
+
+let lastHeaders = [];
+
 function toObjects(rows) {
   if (!rows.length) return [];
-  const head = rows[0].map(h => h.trim().toLowerCase());
+  lastHeaders = rows[0].map(h => h.trim());
+  const head = rows[0].map(normaliseHeader);
   return rows.slice(1).map(r => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? "").trim()])));
 }
 
@@ -93,7 +120,8 @@ function loadQuestions(csvText) {
   err.classList.add("hidden");
 
   const rows = toObjects(parseCSV(csvText));
-  if (!rows.length) return fail("That file has no rows under the header.");
+  const found = lastHeaders.length ? "  Columns found: " + lastHeaders.join(" | ") : "";
+  if (!rows.length) return fail("That file has no rows under the header." + found);
 
   // Stamp each import so question ids are never reused between a rehearsal
   // and the real thing. Answers are filed under phone_questionId, so repeating
@@ -102,15 +130,18 @@ function loadQuestions(csvText) {
   const parsed = [];
   for (const [n, r] of rows.entries()) {
     const text = r.question || r.q || "";
-    if (!text) return fail(`Row ${n + 2} has no question text.`);
+    if (!text) return fail(`Row ${n + 2} has no question text.` + found);
 
     const options = ["option1", "option2", "option3", "option4", "option5", "option6"]
       .map(k => r[k]).filter(v => v);
-    if (options.length < 2) return fail(`Row ${n + 2} needs at least two options.`);
+    if (options.length < 2) {
+      return fail(`Row ${n + 2} has ${options.length} option(s); it needs at least two.`
+        + " Expected columns: question, option1, option2, option3, option4, answer." + found);
+    }
 
     const raw = (r.answer || "").trim().toUpperCase();
     let idx = /^[A-F]$/.test(raw) ? raw.charCodeAt(0) - 65 : parseInt(raw, 10) - 1;
-    if (!(idx >= 0 && idx < options.length)) return fail(`Row ${n + 2} has an answer that isn't one of its options.`);
+    if (!(idx >= 0 && idx < options.length)) return fail(`Row ${n + 2}: answer "${raw}" is not one of its ${options.length} options.`);
 
     parsed.push({ id: `${stamp}q${n + 1}`, text, options, answerIndex: idx, explanation: r.explanation || "" });
   }

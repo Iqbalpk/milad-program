@@ -124,6 +124,31 @@ async function loadVideoGrid() {
 }
 safely("videos", loadVideoGrid);
 
+/* ---------- gold dust ----------------------------------------------------
+   Built in script rather than markup so each mote gets its own size, drift
+   and speed — twenty identical divs in the HTML would read as a pattern.
+   ------------------------------------------------------------------------- */
+safely("dust", () => {
+  const host = $("dust");
+  if (!host || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const count = window.innerWidth < 640 ? 18 : 30;
+  const frag = document.createDocumentFragment();
+
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement("b");
+    const size = 2 + Math.random() * 4;
+    b.style.width = b.style.height = size + "px";
+    b.style.left = (Math.random() * 100) + "%";
+    b.style.setProperty("--dx", (Math.random() * 60 - 30) + "px");
+    b.style.setProperty("--rise", (60 + Math.random() * 40) + "vh");
+    b.style.animationDuration = (11 + Math.random() * 12) + "s";
+    b.style.animationDelay = (-Math.random() * 20) + "s";   // start mid-flight
+    frag.appendChild(b);
+  }
+  host.appendChild(frag);
+});
+
 // The live player is a separate iframe. It gets a src only while the channel
 // is live, and the src is cleared afterwards so nothing keeps buffering.
 function setPlayer(live) {
@@ -154,6 +179,8 @@ onSnapshot(doc(db, "live", "site"), snap => {
   safely("date", () => applyEventDate(d.eventDate, d.eventLabel));
   safely("study", () => renderStudy(Array.isArray(d.study) ? d.study : []));
 }, err => console.error("site listener:", err));
+
+let currentNoticeIds = [];
 
 function renderNotices(notices) {
   const list = $("notif-list");
@@ -197,9 +224,84 @@ function renderNotices(notices) {
     return wrap;
   }));
   currentNoticeIds = notices.map(n => n.id);
+  popNewNotices(notices);
 }
 
-let currentNoticeIds = [];
+/* ---------- show new notifications as an alert ---------------------------
+   The bell badge is easy to miss while someone is watching the quiz, so a new
+   notification also slides into the corner. "Popped" is tracked separately
+   from "seen" so that dismissing an alert doesn't silently clear the badge.
+   ------------------------------------------------------------------------- */
+
+function popNewNotices(notices) {
+  if (!notices.length) return;
+  const host = $("alert-stack");
+  if (!host) return;
+
+  const raw = localStorage.getItem("milad.popped");
+  let popped;
+
+  if (raw === null) {
+    // First visit on this browser: announce only the newest, not a wall of
+    // everything ever posted. Everything older is marked as already shown.
+    popped = new Set(notices.slice(0, -1).map(n => n.id));
+    localStorage.setItem("milad.popped", JSON.stringify([...popped]));
+  } else {
+    try { popped = new Set(JSON.parse(raw) || []); }
+    catch { popped = new Set(); }
+  }
+
+  const fresh = notices.filter(n => !popped.has(n.id));
+  if (!fresh.length) return;
+
+  fresh.slice(-3).forEach(n => showNoticePop(n));   // never more than three at once
+
+  fresh.forEach(n => popped.add(n.id));
+  localStorage.setItem("milad.popped", JSON.stringify([...popped]));
+}
+
+function showNoticePop(n) {
+  const el = document.createElement("div");
+  el.className = "notice-pop glass";
+  el.setAttribute("role", "status");
+
+  const row = document.createElement("div");
+  row.className = "row";
+  const label = document.createElement("span");
+  label.textContent = T.noticeLabel;
+  const close = document.createElement("button");
+  close.className = "close";
+  close.type = "button";
+  close.setAttribute("aria-label", "\u00d7");
+  close.textContent = "\u00d7";
+  close.addEventListener("click", () => el.remove());
+  row.append(label, close);
+  el.appendChild(row);
+
+  const text = document.createElement("p");
+  text.textContent = n.text || "";
+  el.appendChild(text);
+
+  if (n.image && /^data:image\/(jpeg|png|webp);base64,/.test(n.image)) {
+    const img = document.createElement("img");
+    img.src = n.image;
+    img.alt = "";
+    el.appendChild(img);
+  }
+
+  if (n.url && /^https?:\/\//.test(n.url)) {
+    const a = document.createElement("a");
+    a.className = "more";
+    a.href = n.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = T.moreDetails;
+    el.appendChild(a);
+  }
+
+  $("alert-stack").appendChild(el);
+  setTimeout(() => el.remove(), n.image ? 20000 : 14000);   // longer if there's a picture
+}
 
 /* ---------- event date and the study-material window --------------------- */
 

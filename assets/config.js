@@ -66,6 +66,7 @@ export const text = {
   questionLabel:   "ചോദ്യം",
 
   noNotices:       "പുതിയ അറിയിപ്പുകൾ ഇല്ല.",
+  noticeLabel:     "പുതിയ അറിയിപ്പ്",
   answerRecorded:  "ഉത്തരം രേഖപ്പെടുത്തി.",
   moreDetails:     "കൂടുതൽ വിവരങ്ങൾ →",
   studyDefault:    "ഡൗൺലോഡ് ചെയ്യുക",

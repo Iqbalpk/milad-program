@@ -17,6 +17,7 @@
 
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="grain" aria-hidden="true"></div>
+<div class="dust" id="dust" aria-hidden="true"></div>
 
 <!-- Live ribbon — present in the DOM only while the stream is actually on -->
 <div class="ribbon hidden" id="ribbon">
@@ -248,7 +249,9 @@
   </div>
 </footer>
 
-<!-- floating live alert, injected only when the stream starts -->
+<!-- floating alerts: the live banner and any new notification share one
+     stack, so they queue neatly instead of landing on top of each other -->
+<div class="alert-stack" id="alert-stack">
 <div class="live-pop glass hidden" id="live-pop" role="status">
   <div class="row">
     <span class="pulse" aria-hidden="true"></span>
@@ -257,6 +260,7 @@
   </div>
   <p>സംപ്രേഷണം ആരംഭിച്ചു.</p>
   <a class="btn wide" href="#stream" id="live-pop-go">കാണുക</a>
+</div>
 </div>
 
 <script type="module" src="assets/public.js"></script>

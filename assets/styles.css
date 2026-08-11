@@ -186,7 +186,7 @@ a  { color: var(--gold); }
 
 /* Overlay panels sit on top of the hero artwork, so blur alone will not keep
    them legible — they get a near-opaque base and keep the glass edge. */
-.notif-panel, .live-pop { background: var(--glass-over); }
+.notif-panel, .live-pop, .notice-pop { background: var(--glass-over); }
 
 .notif-panel {
   position: absolute; top: calc(100% + .6rem); right: 0; width: min(22rem, calc(100vw - 2rem));
@@ -214,11 +214,24 @@ a  { color: var(--gold); }
 .pulse { width: .6rem; height: .6rem; border-radius: 50%; background: currentColor; flex: none; animation: pulse 1.8s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.8); } }
 
-.live-pop {
+.alert-stack {
   position: fixed; right: 1rem; bottom: 1rem; z-index: 70;
-  width: min(20rem, calc(100vw - 2rem)); padding: 1rem 1.1rem;
+  width: min(21rem, calc(100vw - 2rem));
+  display: grid; gap: .6rem;
+}
+.live-pop, .notice-pop {
+  width: 100%; padding: 1rem 1.1rem;
   animation: pop-up .45s cubic-bezier(.2,1.1,.35,1);
 }
+.notice-pop .row { display: flex; align-items: center; gap: .6rem; color: var(--gold); font-weight: 700; font-size: .85rem; }
+.notice-pop .close {
+  margin-left: auto; background: none; border: 0; color: var(--on-faint);
+  font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 .2rem;
+}
+.notice-pop .close:hover { color: var(--on-field); }
+.notice-pop p { margin: .5rem 0 0; font-size: .98rem; }
+.notice-pop img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; margin-top: .7rem; }
+.notice-pop a.more { display: inline-block; margin-top: .6rem; font-size: .9rem; }
 @keyframes pop-up { from { opacity: 0; transform: translateY(20px) scale(.96); } }
 .live-pop .row { display: flex; align-items: center; gap: .6rem; color: var(--live); font-weight: 700; font-size: .9rem; }
 .live-pop .close {
@@ -229,6 +242,23 @@ a  { color: var(--gold); }
 .live-pop p { margin: .5rem 0 .85rem; font-size: .98rem; }
 
 /* --- hero ----------------------------------------------------------------- */
+
+/* Gold dust across the whole page, behind the content. Transform and opacity
+   only, so it stays cheap on a phone, and it stops for reduced motion. */
+.dust { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+.dust b {
+  position: absolute; bottom: -12px; display: block; border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px 2px rgba(249, 206, 97, .5);
+  animation: float-up linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes float-up {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  12%  { opacity: .9; }
+  88%  { opacity: .65; }
+  100% { transform: translate3d(var(--dx), calc(-1 * var(--rise)), 0); opacity: 0; }
+}
 
 .hero { padding: clamp(2.5rem, 8vw, 5rem) 0 clamp(2.5rem, 6vw, 3.5rem); text-align: center; }
 /* The mawlid line: Aref Ruqaa at its bold weight, gold-filled, revealed
@@ -445,6 +475,7 @@ footer a { color: var(--gold); }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
   .reveal { opacity: 1; transform: none; }
+  .dust { display: none; }
   /* without its animation the reveal clip would stay closed, hiding the line */
   .mawlid span { clip-path: none; }
   .hero-year { opacity: 1; transform: none; }
