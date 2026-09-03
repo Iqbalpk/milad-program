@@ -331,19 +331,15 @@ function applyEventDate(iso, label) {
     });
   }
 
-  // Study material comes down 24 hours before the programme starts.
-  studyCutoffPassed = Date.now() >= start.getTime() - 24 * 60 * 60 * 1000;
-  renderStudy(lastStudy);
 }
 
 /* ---------- study material, managed from the dashboard ------------------- */
 
-let studyCutoffPassed = false;
 let lastStudy = [];
 
 function renderStudy(items) {
   lastStudy = items;
-  const show = items.length > 0 && !studyCutoffPassed;
+  const show = items.length > 0;
   $("study-card").classList.toggle("hidden", !show);
   if (!show) return;
 
