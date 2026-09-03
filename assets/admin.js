@@ -499,7 +499,7 @@ $("save-date")?.addEventListener("click", async () => {
     eventDate: new Date(v).toISOString(),
     eventLabel: $("event-label").value.trim()
   }, { merge: true });
-  flashSite("Date saved. Study material hides 24 hours before it.");
+  flashSite("Date saved.");
 });
 
 /* ---------- live: manual switch, or automatic detection ------------------ */
