@@ -183,7 +183,7 @@
       <div class="grid-half">
         <div class="card">
           <div class="card-head"><h2>Programme date</h2></div>
-          <p class="hint">Study material disappears from the public page 24 hours before this time.</p>
+          <p class="hint">Used to show the programme date on the public page.</p>
           <label class="field">
             <span>Date and time</span>
             <input type="datetime-local" id="event-date">
@@ -193,6 +193,26 @@
             <input type="text" id="event-label" placeholder="Leave blank to format automatically">
           </label>
           <button class="btn wide" id="save-date">Save date</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Study material</h2>
+            <span class="pill" id="study-count">none</span>
+          </div>
+          <p class="hint">Upload the PDF to Google Drive, share it as <b>Anyone with the link</b>,
+            then paste that link here. It stays on the public page until you delete it —
+            delete it any time to reuse this for the next one.</p>
+          <label class="field">
+            <span>Title <em>(what the button says)</em></span>
+            <input type="text" id="study-title" placeholder="മാതൃകാ ചോദ്യങ്ങൾ (PDF)">
+          </label>
+          <label class="field">
+            <span>Link</span>
+            <input type="url" id="study-url" placeholder="https://drive.google.com/...">
+          </label>
+          <button class="btn wide" id="add-study">Add material</button>
+          <div id="study-list-admin" class="notice-box"></div>
         </div>
 
         <div class="card dark-card">
@@ -261,6 +281,7 @@
           <h2>Quiz scores</h2>
           <div class="head-actions">
             <button class="btn quiet sm" id="load-scores">Load answers</button>
+            <button class="btn quiet sm danger-text" id="clear-answers">Clear all answers</button>
           </div>
         </div>
         <p class="hint" id="scores-hint">Press "Load answers" after the quiz. Everyone's answers are
